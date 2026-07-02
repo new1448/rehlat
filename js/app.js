@@ -478,3 +478,47 @@ if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("service-worker.js").catch(() => {});
   });
 }
+
+// ================================================================
+// ✨ إضافة جديدة: نظام زر التثبيت المخصص (PWA Install Prompt)
+// ================================================================
+let deferredPrompt = null;
+
+// الاستماع لحدث المتصفح الذي يسمح بالتثبيت
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault(); // منع ظهور الشريط التلقائي
+  deferredPrompt = e;
+  
+  // البحث عن زر التثبيت في الـ HTML
+  let installBtn = document.getElementById("btn-install");
+  
+  // إذا لم يكن موجوداً، نقوم بإنشائه ديناميكياً داخل الهيدر
+  if (!installBtn) {
+    const header = document.querySelector(".app-header");
+    if (header) {
+      installBtn = document.createElement("button");
+      installBtn.id = "btn-install";
+      installBtn.className = "btn btn-accent btn-sm";
+      installBtn.textContent = "📲 تثبيت التطبيق";
+      installBtn.style.marginRight = "var(--space-2)";
+      installBtn.style.display = "none"; // يبدأ مخفياً
+      
+      installBtn.addEventListener("click", async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt(); // عرض نافذة التثبيت
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === "accepted") {
+            deferredPrompt = null;
+            installBtn.style.display = "none";
+          }
+        }
+      });
+      header.appendChild(installBtn);
+    }
+  }
+  
+  // إظهار الزر إذا تم العثور عليه أو إنشاؤه
+  if (installBtn) {
+    installBtn.style.display = "inline-flex";
+  }
+});
